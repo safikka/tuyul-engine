@@ -10,48 +10,54 @@ The main goal here is to build a rock-solid networking foundation that compiles 
 
 The infrastructure relies on **Event-Driven Reactor Pattern**. To get maximum performance on Linux, directly hook into the kernel's native **`epoll`** mechanism, combined with a strict zero-copy buffer strategy prevent hog RAM or CPU cycles.
 
-```plantuml
-@startuml
-skinparam BackgroundColor #FFFFFF
-skinparam Handwritten false
-skinparam ComponentStyle rectangle
+```mermaid
+graph TD
+    %% Styling
+    classDef appClass fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef coreClass fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef roadmapClass fill:#eee,stroke:#333,stroke-width:1px,stroke-dasharray: 5 5;
+    classDef osClass fill:#ddd,stroke:#333,stroke-width:2px;
 
-package "tuyul-example (Living Examples Catalog)" {
-    [Your App / Example Files] as app
-}
+    subgraph tuyul_example [tuyul-example: Living Examples Catalog]
+        app[Your Application / Examples]
+    end
 
-package "tuyul-engine (Core Framework)" {
-    package "Application Layer (Future Roadmap)" {
-        [http_server] as http
-        [websocket] as ws
-        [mqtt] as mqtt
-        [sftp] as sftp
-        [gRPC] as grpc
-    }
-    
-    package "Transport Layer (Current Focus)" {
-        [tuyul-tcp] as tcp
-        [tuyul-udp] as udp
-    }
-}
+    subgraph tuyul_engine [tuyul-engine: Core Framework]
+        subgraph roadmap [Application Layer: Future Roadmap]
+            http[http_server]
+            ws[websocket]
+            mqtt[mqtt]
+            sftp[sftp]
+            grpc[gRPC]
+        end
+        
+        subgraph transport [Transport Layer: Current Focus]
+            tcp[tuyul-tcp]
+            udp[tuyul-udp]
+        end
+    end
 
-package "Operating System Layer" {
-    [Linux Kernel (Epoll Engine & Native Sockets)] as kernel
-}
+    subgraph os_layer [Operating System Layer]
+        kernel[Linux Kernel: Epoll Engine & Sockets]
+    end
 
-' Data Flow & Relationships
-app --> http : "Uses High-Level API"
-app --> tcp : "Uses Bare TCP (C++17 Callbacks & ErrorCodes)"
+    %% Apply Styles
+    class app appClass;
+    class tcp,udp coreClass;
+    class http,ws,mqtt,sftp,grpc roadmapClass;
+    class kernel osClass;
 
-http --> tcp : "Processes Raw Buffers"
-ws --> http : "Upgrades Connection"
-mqtt --> tcp : "Decodes Binary PDUs"
-sftp --> tcp : "Handles Secure Streams"
-grpc --> tcp : "Serializes Protobuf via HTTP/2"
+    %% Data Flow
+    app -->|Uses High-Level API| http
+    app -->|Uses Bare TCP Callbacks| tcp
 
-tcp --> kernel : "I/O Multiplexing (epoll_wait)"
-udp --> kernel : "Connectionless Datagrams (UDP)"
+    http -->|Processes Raw Buffers| tcp
+    ws -->|Upgrades Connection| http
+    mqtt -->|Decodes Binary PDUs| tcp
+    sftp -->|Handles Secure Streams| tcp
+    grpc -->|Serializes Protobuf| http
 
-@enduml
+    tcp -->|I/O Multiplexing epoll_wait| kernel
+    udp -->|Connectionless Datagrams| kernel
 ```
 ---
